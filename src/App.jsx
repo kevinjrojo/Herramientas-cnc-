@@ -1,10 +1,12 @@
-import NewSetup from "./components/NewSetup";
+import ToolModal from "./components/ToolModal";
 
 function App() {
   return (
-    <>
-      <NewSetup />
-    </>
+    <div style={{ padding: "40px" }}>
+      <h1>Inventario de herramientas CNC</h1>
+
+      <ToolModal />
+    </div>
   );
 }
 
