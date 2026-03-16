@@ -1,17 +1,46 @@
 export const tools = {
-  mecha: [
-    { code: "MCH-001", diameter: 6, brand: "Sandvik" },
-    { code: "MCH-002", diameter: 8, brand: "Iscar" },
-    { code: "MCH-003", diameter: 10, brand: "Walter" },
+  Mecha: [
+    { code: "MCH-001", diameter: "D10", brand: "Sandvik" },
+    { code: "MCH-002", diameter: "D3", brand: "Iscar" },
+    { code: "MCH-003", diameter: "D5", brand: "Walter" },
+    { code: "MCH-003", diameter: "D13", brand: "sin dato" },
   ],
-
-  inserto: [
-    { code: "INS-001", brand: "Sandvik" },
-    { code: "INS-002", brand: "Iscar" },
+  Macho: [
+    { code: "MCH-001", medida: "D10", brand: "Sandvik" },
+    { code: "MCH-002", medida: "D3", brand: "Iscar" },
+    { code: "MCH-003", medida: "D5", brand: "Walter" },
+    { code: "MCH-003", medida: "D13", brand: "sin dato" },
   ],
-
-  porta: [
-    { code: "PRT-001", brand: "Sandvik" },
-    { code: "PRT-002", brand: "Kennametal" },
+  Desbaste: [
+    { code: "DSB-001", diameter: "D10", brand: "Sandvik" },
+    { code: "DSB-002", diameter: "D3", brand: "Iscar" },
+  ],
+  Neutra: [
+    { code: "NTR-001", diameter: "D10", brand: "Sandvik" },
+    { code: "NTR-002", diameter: "D3", brand: "Iscar" },
+  ],
+  Pentacut: [
+    { code: "DSB-001", diameter: "D10", brand: "Sandvik" },
+    { code: "DSB-002", diameter: "D3", brand: "Iscar" },
+  ],
+  Fresa: [
+    { code: "FRS-001", diameter: "D10", brand: "Sandvik" },
+    { code: "FRS-002", diameter: "D3", brand: "Iscar" },
+  ],
+  Tronzado: [
+    { code: "DSB-001", diameter: "D10", brand: "Sandvik" },
+    { code: "DSB-002", diameter: "D3", brand: "Iscar" },
+  ],
+  Roscado: [
+    { code: "DSB-001", diameter: "D10", brand: "Sandvik" },
+    { code: "DSB-002", diameter: "D3", brand: "Iscar" },
+  ],
+  Interior: [
+    { code: "DSB-001", diameter: "D10", brand: "Sandvik" },
+    { code: "DSB-002", diameter: "D3", brand: "Iscar" },
+  ],
+  RanuraInt: [
+    { code: "DSB-001", diameter: "D10", brand: "Sandvik" },
+    { code: "DSB-002", diameter: "D3", brand: "Iscar" },
   ],
 };
