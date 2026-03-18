@@ -112,7 +112,7 @@ function ToolModal() {
         </div>
 
         <div className="space-y-4 rounded-xl bg-blue-50 p-5">
-          <h3 className="text-lg font-semibold text-slate-700">Herramienta</h3>
+          <h3 className="text-lg font-semibold text-slate-700">Herramientas</h3>
 
           <FormSelect
             label="Herramienta"
@@ -136,15 +136,6 @@ function ToolModal() {
           />
 
           <FormSelect
-            label="Fabricante"
-            value={toolForm.fabricante}
-            onChange={(value) =>
-              setToolForm((prev) => ({ ...prev, fabricante: value }))
-            }
-            placeholder="Seleccionar fabricante"
-            options={allBrands}
-          />
-          <FormSelect
             label="Detalle"
             value={toolForm.detalle}
             onChange={(value) =>
@@ -152,6 +143,15 @@ function ToolModal() {
             }
             placeholder="Seleccionar detalle"
             options={allDiameter}
+          />
+          <FormSelect
+            label="Fabricante"
+            value={toolForm.fabricante}
+            onChange={(value) =>
+              setToolForm((prev) => ({ ...prev, fabricante: value }))
+            }
+            placeholder="Seleccionar fabricante"
+            options={allBrands}
           />
         </div>
 
