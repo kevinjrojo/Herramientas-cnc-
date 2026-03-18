@@ -1,21 +1,28 @@
 import { useMemo, useState } from "react";
-import { tools } from "./tools";
+import { toolHolder, tools } from "./tools";
+import HoldersSection from "./tool-modal/HoldersSection";
+import OperationSection from "./tool-modal/OperationSection";
+import ToolsSection from "./tool-modal/ToolsSection";
 
 const allBrands = [
   ...new Set(
-    Object.values(tools)
-      .flat()
-      .map((item) => item.brand),
+    [...Object.values(tools).flat(), ...Object.values(toolHolder).flat()].map(
+      (item) => item.brand ?? item.marca,
+    ),
   ),
-].sort();
+]
+  .filter(Boolean)
+  .sort();
 
 const allDiameter = [
   ...new Set(
-    Object.values(tools)
-      .flat()
-      .map((item) => item.diameter),
+    [...Object.values(tools).flat(), ...Object.values(toolHolder).flat()].map(
+      (item) => item.diameter ?? item.medida ?? item.nombre,
+    ),
   ),
-].sort();
+]
+  .filter(Boolean)
+  .sort();
 
 const initialProductionForm = {
   fecha: "",
@@ -42,6 +49,10 @@ function ToolModal() {
   const [productionForm, setProductionForm] = useState(initialProductionForm);
   const [toolForm, setToolForm] = useState(initialToolForm);
   const [holderForm, setHolderForm] = useState(initialHolderForm);
+  const [selectedTools, setSelectedTools] = useState([]);
+  const [selectedHolders, setSelectedHolders] = useState([]);
+  const [editingToolIndex, setEditingToolIndex] = useState(null);
+  const [editingHolderIndex, setEditingHolderIndex] = useState(null);
 
   const toolCodes = useMemo(
     () => (toolForm.herramienta ? (tools[toolForm.herramienta] ?? []) : []),
@@ -49,199 +60,233 @@ function ToolModal() {
   );
 
   const holderCodes = useMemo(
-    () => (holderForm.nombrePorta ? (tools[holderForm.nombrePorta] ?? []) : []),
+    () =>
+      holderForm.nombrePorta ? (toolHolder[holderForm.nombrePorta] ?? []) : [],
     [holderForm.nombrePorta],
   );
+
+  const addTool = () => {
+    if (!toolForm.herramienta || !toolForm.codigo) {
+      return;
+    }
+
+    if (editingToolIndex !== null) {
+      setSelectedTools((prev) =>
+        prev.map((item, index) =>
+          index === editingToolIndex ? { ...toolForm } : item,
+        ),
+      );
+      setEditingToolIndex(null);
+    } else {
+      setSelectedTools((prev) => [...prev, { ...toolForm }]);
+    }
+
+    setToolForm(initialToolForm);
+  };
+
+  const addHolder = () => {
+    if (!holderForm.nombrePorta || !holderForm.codigo) {
+      return;
+    }
+
+    if (editingHolderIndex !== null) {
+      setSelectedHolders((prev) =>
+        prev.map((item, index) =>
+          index === editingHolderIndex ? { ...holderForm } : item,
+        ),
+      );
+      setEditingHolderIndex(null);
+    } else {
+      setSelectedHolders((prev) => [...prev, { ...holderForm }]);
+    }
+
+    setHolderForm(initialHolderForm);
+  };
+
+  const removeTool = (indexToRemove) => {
+    setSelectedTools((prev) =>
+      prev.filter((_, index) => index !== indexToRemove),
+    );
+    if (editingToolIndex === indexToRemove) {
+      setEditingToolIndex(null);
+      setToolForm(initialToolForm);
+    }
+  };
+
+  const removeHolder = (indexToRemove) => {
+    setSelectedHolders((prev) =>
+      prev.filter((_, index) => index !== indexToRemove),
+    );
+    if (editingHolderIndex === indexToRemove) {
+      setEditingHolderIndex(null);
+      setHolderForm(initialHolderForm);
+    }
+  };
+
+  const editTool = (index) => {
+    setToolForm(selectedTools[index]);
+    setEditingToolIndex(index);
+  };
+
+  const editHolder = (index) => {
+    setHolderForm(selectedHolders[index]);
+    setEditingHolderIndex(index);
+  };
+
+  const downloadWord = () => {
+    if (!selectedTools.length && !selectedHolders.length) {
+      return;
+    }
+
+    const toolRows = selectedTools
+      .map(
+        (tool, index) => `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${tool.herramienta}</td>
+            <td>${tool.codigo}</td>
+            <td>${tool.detalle || "-"}</td>
+            <td>${tool.fabricante || "-"}</td>
+          </tr>`,
+      )
+      .join("");
+
+    const holderRows = selectedHolders
+      .map(
+        (holder, index) => `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${holder.nombrePorta}</td>
+            <td>${holder.codigo}</td>
+            <td>${holder.marcaFabricante || "-"}</td>
+          </tr>`,
+      )
+      .join("");
+
+    const content = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+          <meta charset="utf-8">
+          <title>Registro CNC</title>
+          <style>
+            body { font-family: Arial, sans-serif; }
+            h1, h2 { color: #1e293b; }
+            table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+            th, td { border: 1px solid #cbd5e1; padding: 8px; text-align: left; }
+            th { background: #e2e8f0; }
+          </style>
+        </head>
+        <body>
+          <h1>Preparación de torno CNC</h1>
+          <h2>Datos y herramientas a utilizar</h2>
+          <p><strong>Fecha:</strong> ${productionForm.fecha || "-"}</p>
+          <p><strong>Recurso:</strong> ${productionForm.recurso || "-"}</p>
+          <p><strong>Código plano:</strong> ${productionForm.codPlano || "-"}</p>
+          <p><strong>Armador:</strong> ${productionForm.armador || "-"}</p>
+          <p><strong>Operación:</strong> ${productionForm.operacion || "-"}</p>
+
+          <h2>Herramientas (${selectedTools.length})</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Herramienta</th>
+                <th>Código</th>
+                <th>Detalle</th>
+                <th>Fabricante</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${toolRows || '<tr><td colspan="5">Sin herramientas cargadas</td></tr>'}
+            </tbody>
+          </table>
+
+          <h2>Porta herramientas (${selectedHolders.length})</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Nombre porta</th>
+                <th>Código</th>
+                <th>Marca fabricante</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${holderRows || '<tr><td colspan="4">Sin porta herramientas cargados</td></tr>'}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+
+    const blob = new Blob([content], {
+      type: "application/msword;charset=utf-8",
+    });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `registro-cnc-${productionForm.fecha || "sin-fecha"}.doc`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+  };
 
   return (
     <section className="mx-auto w-full max-w-5xl rounded-2xl border border-slate-200 bg-white p-8 shadow-xl">
       <h2 className="mb-6 text-center text-2xl font-bold text-slate-800">
-        Registro de herramientas CNC
+        Preparación de torno CNC
       </h2>
 
       <div className="grid gap-8 md:grid-cols-2">
-        <div className="space-y-4 rounded-xl bg-slate-50 p-5">
-          <h3 className="text-lg font-semibold text-slate-700">
-            Datos de operación
-          </h3>
+        <OperationSection
+          productionForm={productionForm}
+          setProductionForm={setProductionForm}
+        />
 
-          <FormInput
-            label="Fecha"
-            type="date"
-            value={productionForm.fecha}
-            onChange={(value) =>
-              setProductionForm((prev) => ({ ...prev, fecha: value }))
-            }
-          />
+        <ToolsSection
+          toolForm={toolForm}
+          setToolForm={setToolForm}
+          tools={tools}
+          toolCodes={toolCodes}
+          allDiameter={allDiameter}
+          allBrands={allBrands}
+          addTool={addTool}
+          editingToolIndex={editingToolIndex}
+          setEditingToolIndex={setEditingToolIndex}
+          initialToolForm={initialToolForm}
+          selectedTools={selectedTools}
+          editTool={editTool}
+          removeTool={removeTool}
+        />
 
-          <FormInput
-            label="Recurso"
-            value={productionForm.recurso}
-            onChange={(value) =>
-              setProductionForm((prev) => ({ ...prev, recurso: value }))
-            }
-            placeholder="Ej: 247"
-          />
+        <HoldersSection
+          holderForm={holderForm}
+          setHolderForm={setHolderForm}
+          toolHolder={toolHolder}
+          holderCodes={holderCodes}
+          allBrands={allBrands}
+          addHolder={addHolder}
+          editingHolderIndex={editingHolderIndex}
+          setEditingHolderIndex={setEditingHolderIndex}
+          initialHolderForm={initialHolderForm}
+          selectedHolders={selectedHolders}
+          editHolder={editHolder}
+          removeHolder={removeHolder}
+        />
+      </div>
 
-          <FormInput
-            label="Cod. plano"
-            value={productionForm.codPlano}
-            onChange={(value) =>
-              setProductionForm((prev) => ({ ...prev, codPlano: value }))
-            }
-            placeholder="Ej: 524834"
-          />
-
-          <FormInput
-            label="Armador"
-            value={productionForm.armador}
-            onChange={(value) =>
-              setProductionForm((prev) => ({ ...prev, armador: value }))
-            }
-            placeholder="Ej: 3027"
-          />
-
-          <FormInput
-            label="Operación"
-            value={productionForm.operacion}
-            onChange={(value) =>
-              setProductionForm((prev) => ({ ...prev, operacion: value }))
-            }
-            placeholder="Ej: 02"
-          />
-        </div>
-
-        <div className="space-y-4 rounded-xl bg-blue-50 p-5">
-          <h3 className="text-lg font-semibold text-slate-700">Herramientas</h3>
-
-          <FormSelect
-            label="Herramienta"
-            value={toolForm.herramienta}
-            onChange={(value) =>
-              setToolForm({ herramienta: value, codigo: "", fabricante: "" })
-            }
-            placeholder="Seleccionar herramienta"
-            options={Object.keys(tools)}
-          />
-
-          <FormSelect
-            label="Código"
-            value={toolForm.codigo}
-            onChange={(value) =>
-              setToolForm((prev) => ({ ...prev, codigo: value }))
-            }
-            placeholder="Seleccionar código"
-            disabled={!toolForm.herramienta}
-            options={toolCodes.map((tool) => tool.code)}
-          />
-
-          <FormSelect
-            label="Detalle"
-            value={toolForm.detalle}
-            onChange={(value) =>
-              setToolForm((prev) => ({ ...prev, detalle: value }))
-            }
-            placeholder="Seleccionar detalle"
-            options={allDiameter}
-          />
-          <FormSelect
-            label="Fabricante"
-            value={toolForm.fabricante}
-            onChange={(value) =>
-              setToolForm((prev) => ({ ...prev, fabricante: value }))
-            }
-            placeholder="Seleccionar fabricante"
-            options={allBrands}
-          />
-        </div>
-
-        <div className="space-y-4 rounded-xl bg-emerald-50 p-5 md:col-span-2">
-          <h3 className="text-lg font-semibold text-slate-700">
-            Porta herramientas
-          </h3>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            <FormSelect
-              label="Nombre porta"
-              value={holderForm.nombrePorta}
-              onChange={(value) =>
-                setHolderForm({
-                  nombrePorta: value,
-                  codigo: "",
-                  marcaFabricante: "",
-                })
-              }
-              placeholder="Seleccionar porta"
-              options={Object.keys(tools)}
-            />
-
-            <FormSelect
-              label="Código"
-              value={holderForm.codigo}
-              onChange={(value) =>
-                setHolderForm((prev) => ({ ...prev, codigo: value }))
-              }
-              placeholder="Seleccionar código"
-              disabled={!holderForm.nombrePorta}
-              options={holderCodes.map((tool) => tool.code)}
-            />
-
-            <FormSelect
-              label="Marca fabricante"
-              value={holderForm.marcaFabricante}
-              onChange={(value) =>
-                setHolderForm((prev) => ({ ...prev, marcaFabricante: value }))
-              }
-              placeholder="Seleccionar marca"
-              options={allBrands}
-            />
-          </div>
-        </div>
+      <div className="mt-8 flex justify-end">
+        <button
+          type="button"
+          className="rounded-lg bg-slate-800 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-900 disabled:cursor-not-allowed disabled:bg-slate-400"
+          onClick={downloadWord}
+          disabled={!selectedTools.length && !selectedHolders.length}
+        >
+          Descargar Word de todo el registro
+        </button>
       </div>
     </section>
   );
 }
 
-function FormInput({ label, value, onChange, type = "text", placeholder }) {
-  return (
-    <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
-      {label}
-      <input
-        type={type}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-      />
-    </label>
-  );
-}
-
-function FormSelect({
-  label,
-  value,
-  onChange,
-  options,
-  placeholder,
-  disabled,
-}) {
-  return (
-    <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
-      {label}
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        disabled={disabled}
-        className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200 disabled:cursor-not-allowed disabled:bg-slate-100"
-      >
-        <option value="">{placeholder}</option>
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
 export default ToolModal;
